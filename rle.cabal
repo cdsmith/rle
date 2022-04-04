@@ -1,0 +1,21 @@
+cabal-version:      2.4
+name:               rle
+version:            0.1.0.0
+author:             Chris Smith
+maintainer:         cdsmith@gmail.com
+
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:  RLESequence
+    build-depends:    base, fingertree, containers
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+test-suite tests
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+
+    build-depends:    base ^>=4.15.1.0, rle
+    hs-source-dirs:   test
+    default-language: Haskell2010
