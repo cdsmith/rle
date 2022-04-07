@@ -10,7 +10,6 @@
 
 module RLESequence
   ( RLESequence (Empty, (:<|), (:|>)),
-    empty,
     singleton,
     fromList,
     null,
@@ -33,6 +32,8 @@ import qualified Control.Monad as Monad
 import Data.FingerTree (FingerTree, Measured (..))
 import qualified Data.FingerTree as FingerTree
 import qualified Data.List as List
+import qualified Data.List.NonEmpty as NonEmpty
+import Data.Semigroup (stimes)
 import GHC.Generics (Generic)
 import Prelude
   ( Applicative (..),
@@ -40,7 +41,6 @@ import Prelude
     Eq (..),
     Foldable (foldMap),
     Int,
-    Integral (..),
     Maybe (..),
     Monoid (..),
     Num (..),
@@ -49,7 +49,6 @@ import Prelude
     Show (..),
     const,
     fst,
-    odd,
     otherwise,
     snd,
     ($),
@@ -74,7 +73,10 @@ newtype RLESequence a = RLESequence {rleTree :: FingerTree Length (Run a)}
   deriving stock (Eq, Ord, Show, Generic)
 
 pattern Empty :: RLESequence a
-pattern Empty <- (FingerTree.null . rleTree -> True) where Empty = empty
+pattern Empty <-
+  (FingerTree.null . rleTree -> True)
+  where
+    Empty = RLESequence FingerTree.empty
 
 data VeiwL a = EmptyL | a :< RLESequence a
 
@@ -124,21 +126,12 @@ instance Eq a => Semigroup (RLESequence a) where
         | otherwise -> xs <> ys
 
 instance Eq a => Monoid (RLESequence a) where
-  mempty = empty
+  mempty = Empty
 
 instance Foldable RLESequence where
   foldMap f (RLESequence xs) = foldMap fRun xs
     where
-      fRun (Run x n) = go n
-        where
-          fx = f x
-          go 1 = fx
-          go n
-            | odd n = fx <> go (n - 1)
-            | otherwise = let a = go (n `div` 2) in a <> a
-
-empty :: RLESequence a
-empty = RLESequence FingerTree.empty
+      fRun (Run x n) = stimes n (f x)
 
 singleton :: a -> RLESequence a
 singleton x = RLESequence (FingerTree.singleton (Run x 1))
@@ -146,7 +139,8 @@ singleton x = RLESequence (FingerTree.singleton (Run x 1))
 fromList :: Eq a => [a] -> RLESequence a
 fromList xs = RLESequence (FingerTree.fromList runs)
   where
-    runs = List.map (\g -> Run (List.head g) (List.length g)) (List.group xs)
+    runs = List.map toRun (NonEmpty.group xs)
+    toRun g@(x NonEmpty.:| _) = Run x (NonEmpty.length g)
 
 null :: RLESequence a -> Bool
 null (RLESequence t) = FingerTree.null t
@@ -177,7 +171,7 @@ splitAt n (RLESequence xs) = case FingerTree.split (> Length n) xs of
           | otherwise = a FingerTree.|> Run x i
         after = Run x (m - i) FingerTree.<| b
      in (RLESequence before, RLESequence after)
-  _ -> (RLESequence xs, empty)
+  _ -> (RLESequence xs, Empty)
 
 adjust :: Eq a => (a -> a) -> Int -> RLESequence a -> RLESequence a
 adjust f n xs = case splitAt n xs of
