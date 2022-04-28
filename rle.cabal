@@ -17,6 +17,6 @@ test-suite tests
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
 
-    build-depends:    base ^>=4.15.1.0, rle, hspec
+    build-depends:    base, rle, hspec
     hs-source-dirs:   test
     default-language: Haskell2010
