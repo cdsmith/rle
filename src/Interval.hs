@@ -22,7 +22,7 @@ instance Foldable Interval where
   foldMap f (Unique x) = f x
 
 instance (Eq a, Enum a) => Compression Interval a where
-  logicalLength (Interval i j) = i - j + 1
+  logicalLength (Interval i j) = j - i + 1
   logicalLength (Unique _) = 1
 
   solo x
