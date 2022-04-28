@@ -27,10 +27,12 @@ module CompressedSeq
   )
 where
 
-import Compression
+import Compression (Compression (..))
 import qualified Control.Monad as Monad
+import Data.Coerce (coerce)
 import Data.FingerTree (FingerTree, Measured (..))
 import qualified Data.FingerTree as FingerTree
+import Data.Foldable (toList)
 import qualified Data.List as List
 import Data.These (These (..))
 import GHC.Generics (Generic)
@@ -53,17 +55,33 @@ import Prelude
     (<$>),
   )
 
+newtype Length = Length {getLength :: Int} deriving (Eq, Ord, Show)
+
+instance Semigroup Length where
+  Length x <> Length y = Length (x + y)
+
+instance Monoid Length where
+  mempty = Length 0
+
+newtype Atom a = Atom {getAtom :: a} deriving (Eq, Ord, Show, Generic)
+
+instance Compression f a => Measured Length (Atom (f a)) where
+  measure = Length . logicalLength . getAtom
+
 newtype CompressedSeq f a = CompressedSeq
-  { atoms :: FingerTree Length (f a)
+  { atomTree :: FingerTree Length (Atom (f a))
   }
   deriving stock (Eq, Ord, Show, Generic)
 
 atom :: Compression f a => f a -> CompressedSeq f a
-atom = CompressedSeq . FingerTree.singleton
+atom = CompressedSeq . FingerTree.singleton . Atom
+
+atoms :: Compression f a => CompressedSeq f a -> [f a]
+atoms = coerce . toList . atomTree
 
 pattern Empty :: Compression f a => CompressedSeq f a
 pattern Empty <-
-  (FingerTree.null . atoms -> True)
+  (FingerTree.null . atomTree -> True)
   where
     Empty = CompressedSeq FingerTree.empty
 
@@ -72,7 +90,7 @@ data VeiwL f a = EmptyL | a :< CompressedSeq f a
 viewl :: Compression f a => CompressedSeq f a -> VeiwL f a
 viewl (CompressedSeq s) = case FingerTree.viewl s of
   FingerTree.EmptyL -> EmptyL
-  x FingerTree.:< xs -> case popHead x of
+  Atom x FingerTree.:< xs -> case popHead x of
     (a, Nothing) -> a :< CompressedSeq xs
     (a, Just x') -> a :< (atom x' <> CompressedSeq xs)
 
@@ -87,7 +105,7 @@ data VeiwR f a = EmptyR | CompressedSeq f a :> a
 viewr :: Compression f a => CompressedSeq f a -> VeiwR f a
 viewr (CompressedSeq s) = case FingerTree.viewr s of
   FingerTree.EmptyR -> EmptyR
-  xs FingerTree.:> x -> case popTail x of
+  xs FingerTree.:> Atom x -> case popTail x of
     (Nothing, a) -> CompressedSeq xs :> a
     (Just x', a) -> (CompressedSeq xs <> atom x') :> a
 
@@ -106,16 +124,17 @@ instance Compression f a => Semigroup (CompressedSeq f a) where
     case (FingerTree.viewr xs, FingerTree.viewl ys) of
       (FingerTree.EmptyR, _) -> CompressedSeq ys
       (_, FingerTree.EmptyL) -> CompressedSeq xs
-      (xxs FingerTree.:> x, y FingerTree.:< yys) -> case tryConcat x y of
-        -- Recursion terminates because there is one fewer total element.
-        Just x' -> CompressedSeq xxs <> atom x' <> CompressedSeq yys
-        Nothing -> CompressedSeq (xs <> ys)
+      (xxs FingerTree.:> Atom x, Atom y FingerTree.:< yys) ->
+        case tryConcat x y of
+          -- Recursion terminates because there is one fewer total element.
+          Just x' -> CompressedSeq xxs <> atom x' <> CompressedSeq yys
+          Nothing -> CompressedSeq (xs <> ys)
 
 instance Compression f a => Monoid (CompressedSeq f a) where
   mempty = Empty
 
 instance Foldable f => Foldable (CompressedSeq f) where
-  foldMap f (CompressedSeq xs) = foldMap (foldMap f) xs
+  foldMap f (CompressedSeq xs) = foldMap (foldMap f . getAtom) xs
 
 singleton :: Compression f a => a -> CompressedSeq f a
 singleton x = atom (solo x)
@@ -142,7 +161,7 @@ splitAt ::
   CompressedSeq f a ->
   (CompressedSeq f a, CompressedSeq f a)
 splitAt n (CompressedSeq xs) = case FingerTree.split (> Length n) xs of
-  (a, FingerTree.viewl -> x FingerTree.:< b) ->
+  (a, FingerTree.viewl -> Atom x FingerTree.:< b) ->
     case trySplit x (n - getLength (measure a)) of
       This x' -> (CompressedSeq a <> atom x', CompressedSeq b)
       That y' -> (CompressedSeq a, atom y' <> CompressedSeq b)

@@ -3,14 +3,10 @@
 
 module Interval (Interval) where
 
-import Compression (Compression (..), Length (Length))
-import Data.FingerTree (Measured (..))
+import Compression (Compression (..))
 import Data.These (These (..))
 
 data Interval a = Interval a a deriving (Eq, Ord, Show)
-
-instance (Eq a, Enum a) => Measured Length (Interval a) where
-  measure i = Length (logicalLength i)
 
 instance (Eq a, Enum a) => Compression Interval a where
   logicalLength (Interval a b) = fromEnum b - fromEnum a + 1

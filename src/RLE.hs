@@ -3,15 +3,11 @@
 
 module RLE (RLE) where
 
-import Compression (Compression (..), Length (Length))
-import Data.FingerTree (Measured (..))
+import Compression (Compression (..))
 import Data.Semigroup (stimes)
 import Data.These (These (..))
 
 data RLE a = Run a !Int deriving (Eq, Ord, Show)
-
-instance Measured Length (RLE a) where
-  measure (Run _ n) = Length n
 
 instance Foldable RLE where
   foldMap f (Run x n) = stimes n (f x)
