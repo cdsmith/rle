@@ -5,8 +5,7 @@
 
 module Interval (Interval) where
 
-import Compression (Compression (..))
-import Data.These (These (..))
+import Compression (Compression (..), Split (..))
 
 data Interval a where
   Interval :: Enum a => Int -> Int -> Interval a
@@ -45,7 +44,7 @@ instance (Eq a, Enum a) => Compression Interval a where
   tryConcat _ _ = Nothing
 
   trySplit int@(Interval j k) i
-    | i <= 0 = That int
-    | i > k - j = This int
-    | otherwise = let m = j + i in These (Interval i (m - 1)) (Interval m k)
-  trySplit int@(Unique _) i = if i <= 0 then That int else This int
+    | i <= 0 = AllRight int
+    | i > k - j = AllLeft int
+    | otherwise = let m = j + i in Split [Interval i (m - 1)] [Interval m k]
+  trySplit int@(Unique _) i = if i <= 0 then AllRight int else AllLeft int

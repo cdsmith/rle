@@ -3,8 +3,7 @@
 
 module Uncompressed (Uncompressed) where
 
-import Compression (Compression (..))
-import Data.These (These (..))
+import Compression (Compression (..), Split (..))
 
 newtype Uncompressed a = Uncompressed a deriving (Eq, Ord, Show)
 
@@ -22,5 +21,5 @@ instance Compression Uncompressed a where
   tryConcat _ _ = Nothing
 
   trySplit x i
-    | i <= 0 = That x
-    | otherwise = This x
+    | i <= 0 = AllRight x
+    | otherwise = AllLeft x

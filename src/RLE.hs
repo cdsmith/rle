@@ -3,9 +3,8 @@
 
 module RLE (RLE) where
 
-import Compression (Compression (..))
+import Compression (Compression (..), Split (..))
 import Data.Semigroup (stimes)
-import Data.These (These (..))
 
 data RLE a = Run a !Int deriving (Eq, Ord, Show)
 
@@ -29,6 +28,6 @@ instance Eq a => Compression RLE a where
       else Nothing
 
   trySplit (Run x n) i
-    | i <= 0 = That (Run x n)
-    | i >= n = This (Run x n)
-    | otherwise = These (Run x i) (Run x (n - i))
+    | i <= 0 = AllRight (Run x n)
+    | i >= n = AllLeft (Run x n)
+    | otherwise = Split [Run x i] [Run x (n - i)]

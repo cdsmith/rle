@@ -27,14 +27,13 @@ module CompressedSeq
   )
 where
 
-import Compression (Compression (..))
+import Compression (Compression (..), Split (..))
 import qualified Control.Monad as Monad
 import Data.Coerce (coerce)
 import Data.FingerTree (FingerTree, Measured (..))
 import qualified Data.FingerTree as FingerTree
 import Data.Foldable (toList)
 import qualified Data.List as List
-import Data.These (These (..))
 import GHC.Generics (Generic)
 import Prelude
   ( Applicative (..),
@@ -161,9 +160,12 @@ splitAt ::
 splitAt n (CompressedSeq xs) = case FingerTree.split (> Length n) xs of
   (a, FingerTree.viewl -> Atom x FingerTree.:< b) ->
     case trySplit x (n - getLength (measure a)) of
-      This x' -> (CompressedSeq a <> atom x', CompressedSeq b)
-      That y' -> (CompressedSeq a, atom y' <> CompressedSeq b)
-      These x' y' -> (CompressedSeq a <> atom x', atom y' <> CompressedSeq b)
+      AllLeft x' -> (CompressedSeq a <> atom x', CompressedSeq b)
+      AllRight y' -> (CompressedSeq a, atom y' <> CompressedSeq b)
+      Split ls rs ->
+        ( CompressedSeq a <> foldMap atom ls,
+          foldMap atom rs <> CompressedSeq b
+        )
   _ -> (CompressedSeq xs, Empty)
 
 lookup :: Compression f a => Int -> CompressedSeq f a -> Maybe a

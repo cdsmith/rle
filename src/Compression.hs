@@ -6,7 +6,8 @@
 module Compression where
 
 import Data.Kind (Type)
-import Data.These (These)
+
+data Split a = AllLeft a | AllRight a | Split [a] [a] deriving (Eq, Ord, Show)
 
 class Foldable f => Compression (f :: Type -> Type) a where
   logicalLength :: f a -> Int
@@ -14,4 +15,6 @@ class Foldable f => Compression (f :: Type -> Type) a where
   popHead :: f a -> (a, [f a])
   popTail :: f a -> ([f a], a)
   tryConcat :: f a -> f a -> Maybe (f a)
-  trySplit :: f a -> Int -> These (f a) (f a)
+  trySplit :: f a -> Int -> Split (f a)
+
+-- LAWS: TODO
