@@ -16,8 +16,8 @@ instance Compression Uncompressed a where
 
   solo = Uncompressed
 
-  popHead (Uncompressed x) = (x, Nothing)
-  popTail (Uncompressed x) = (Nothing, x)
+  popHead (Uncompressed x) = (x, [])
+  popTail (Uncompressed x) = ([], x)
 
   tryConcat _ _ = Nothing
 

@@ -91,8 +91,7 @@ viewl :: Compression f a => CompressedSeq f a -> VeiwL f a
 viewl (CompressedSeq s) = case FingerTree.viewl s of
   FingerTree.EmptyL -> EmptyL
   Atom x FingerTree.:< xs -> case popHead x of
-    (a, Nothing) -> a :< CompressedSeq xs
-    (a, Just x') -> a :< (atom x' <> CompressedSeq xs)
+    (a, as) -> a :< (foldMap atom as <> CompressedSeq xs)
 
 pattern (:<|) :: Compression f a => a -> CompressedSeq f a -> CompressedSeq f a
 pattern x :<| xs <-
@@ -106,8 +105,7 @@ viewr :: Compression f a => CompressedSeq f a -> VeiwR f a
 viewr (CompressedSeq s) = case FingerTree.viewr s of
   FingerTree.EmptyR -> EmptyR
   xs FingerTree.:> Atom x -> case popTail x of
-    (Nothing, a) -> CompressedSeq xs :> a
-    (Just x', a) -> (CompressedSeq xs <> atom x') :> a
+    (as, a) -> (CompressedSeq xs <> foldMap atom as) :> a
 
 pattern (:|>) :: Compression f a => CompressedSeq f a -> a -> CompressedSeq f a
 pattern xs :|> x <-

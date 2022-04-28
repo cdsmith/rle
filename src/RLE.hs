@@ -17,11 +17,11 @@ instance Eq a => Compression RLE a where
 
   solo x = Run x 1
 
-  popHead (Run x 1) = (x, Nothing)
-  popHead (Run x n) = (x, Just $ Run x (n - 1))
+  popHead (Run x 1) = (x, [])
+  popHead (Run x n) = (x, [Run x (n - 1)])
 
-  popTail (Run x 1) = (Nothing, x)
-  popTail (Run x n) = (Just $ Run x (n - 1), x)
+  popTail (Run x 1) = ([], x)
+  popTail (Run x n) = ([Run x (n - 1)], x)
 
   tryConcat (Run x n) (Run y m) =
     if x == y

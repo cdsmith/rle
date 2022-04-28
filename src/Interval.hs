@@ -33,12 +33,12 @@ instance (Eq a, Enum a) => Compression Interval a where
       i = fromEnum x
 
   popHead (Interval i j) =
-    (toEnum i, if i == j then Nothing else Just (Interval (i + 1) j))
-  popHead (Unique x) = (x, Nothing)
+    (toEnum i, if i == j then [] else [Interval (i + 1) j])
+  popHead (Unique x) = (x, [])
 
   popTail (Interval i j) =
-    (if i == j then Nothing else Just (Interval i (j - 1)), toEnum j)
-  popTail (Unique x) = (Nothing, x)
+    (if i == j then [] else [Interval i (j - 1)], toEnum j)
+  popTail (Unique x) = ([], x)
 
   tryConcat (Interval i j) (Interval k l) =
     if j + 1 == k then Just (Interval i l) else Nothing
