@@ -84,9 +84,9 @@ pattern Empty <-
   where
     Empty = CompressedSeq FingerTree.empty
 
-data VeiwL f a = EmptyL | a :< CompressedSeq f a
+data ViewL f a = EmptyL | a :< CompressedSeq f a
 
-viewl :: Compression f a => CompressedSeq f a -> VeiwL f a
+viewl :: Compression f a => CompressedSeq f a -> ViewL f a
 viewl (CompressedSeq s) = case FingerTree.viewl s of
   FingerTree.EmptyL -> EmptyL
   Atom x FingerTree.:< xs -> case popHead x of
@@ -98,9 +98,9 @@ pattern x :<| xs <-
   where
     x :<| xs = singleton x <> xs
 
-data VeiwR f a = EmptyR | CompressedSeq f a :> a
+data ViewR f a = EmptyR | CompressedSeq f a :> a
 
-viewr :: Compression f a => CompressedSeq f a -> VeiwR f a
+viewr :: Compression f a => CompressedSeq f a -> ViewR f a
 viewr (CompressedSeq s) = case FingerTree.viewr s of
   FingerTree.EmptyR -> EmptyR
   xs FingerTree.:> Atom x -> case popTail x of
