@@ -8,7 +8,7 @@ module Compression where
 import Data.Kind (Type)
 
 class Foldable f => Compression (f :: Type -> Type) a where
-  logicalLength :: f a -> Int
+  count :: f a -> Int
   solo :: a -> f a
   popHead :: f a -> (a, [f a])
   popTail :: f a -> ([f a], a)
@@ -16,3 +16,9 @@ class Foldable f => Compression (f :: Type -> Type) a where
   split :: f a -> Int -> ([f a], [f a])
 
 -- LAWS: TODO
+
+-- If
+--    tryMerge a b == Just ab
+--    tryMerge b c == Just bc
+-- Then
+--    tryMerge a bc == tryMerge ab c /= Nothing

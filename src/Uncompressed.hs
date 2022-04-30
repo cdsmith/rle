@@ -1,17 +1,21 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Uncompressed (Uncompressed) where
+module Uncompressed (Uncompressed (..)) where
 
 import Compression (Compression (..))
+import Text.Show.Deriving (deriveShow1)
 
 newtype Uncompressed a = Uncompressed a deriving (Eq, Ord, Show)
+
+deriveShow1 ''Uncompressed
 
 instance Foldable Uncompressed where
   foldMap f (Uncompressed x) = f x
 
 instance Compression Uncompressed a where
-  logicalLength _ = 1
+  count _ = 1
 
   solo = Uncompressed
 

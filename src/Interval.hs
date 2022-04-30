@@ -2,10 +2,12 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Interval (Interval) where
+module Interval (Interval(..)) where
 
 import Compression (Compression (..))
+import Text.Show.Deriving (deriveShow1)
 
 data Interval a where
   Interval :: Enum a => Int -> Int -> Interval a
@@ -17,13 +19,15 @@ deriving instance Ord a => Ord (Interval a)
 
 deriving instance Show a => Show (Interval a)
 
+deriveShow1 ''Interval
+
 instance Foldable Interval where
   foldMap f (Interval i j) = foldMap (f . toEnum) [i .. j]
   foldMap f (Unique x) = f x
 
 instance (Eq a, Enum a) => Compression Interval a where
-  logicalLength (Interval i j) = j - i + 1
-  logicalLength (Unique _) = 1
+  count (Interval i j) = j - i + 1
+  count (Unique _) = 1
 
   solo x
     | x == toEnum i = Interval i i

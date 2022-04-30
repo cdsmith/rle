@@ -1,18 +1,22 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module RLE (RLE) where
+module RLE (RLE(..)) where
 
 import Compression (Compression (..))
 import Data.Semigroup (stimes)
+import Text.Show.Deriving (deriveShow1)
 
 data RLE a = Run a !Int deriving (Eq, Ord, Show)
+
+deriveShow1 ''RLE
 
 instance Foldable RLE where
   foldMap f (Run x n) = stimes n (f x)
 
 instance Eq a => Compression RLE a where
-  logicalLength (Run _ n) = n
+  count (Run _ n) = n
 
   solo x = Run x 1
 

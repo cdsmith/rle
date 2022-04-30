@@ -9,6 +9,7 @@
 
 module CompressedSeq
   ( CompressedSeq (Empty, (:<|), (:|>)),
+    atom,
     atoms,
     singleton,
     fromList,
@@ -65,7 +66,7 @@ instance Monoid Length where
 newtype Atom a = Atom {getAtom :: a} deriving (Eq, Ord, Show, Generic)
 
 instance Compression f a => Measured Length (Atom (f a)) where
-  measure = Length . logicalLength . getAtom
+  measure = Length . count . getAtom
 
 newtype CompressedSeq f a = CompressedSeq
   { atomTree :: FingerTree Length (Atom (f a))
