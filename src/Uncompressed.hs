@@ -3,7 +3,7 @@
 
 module Uncompressed (Uncompressed) where
 
-import Compression (Compression (..), Split (..))
+import Compression (Compression (..))
 
 newtype Uncompressed a = Uncompressed a deriving (Eq, Ord, Show)
 
@@ -18,8 +18,8 @@ instance Compression Uncompressed a where
   popHead (Uncompressed x) = (x, [])
   popTail (Uncompressed x) = ([], x)
 
-  tryConcat _ _ = Nothing
+  tryMerge _ _ = Nothing
 
-  trySplit x i
-    | i <= 0 = AllRight x
-    | otherwise = AllLeft x
+  split x i
+    | i <= 0 = ([], [x])
+    | otherwise = ([x], [])

@@ -3,7 +3,7 @@
 
 module RLE (RLE) where
 
-import Compression (Compression (..), Split (..))
+import Compression (Compression (..))
 import Data.Semigroup (stimes)
 
 data RLE a = Run a !Int deriving (Eq, Ord, Show)
@@ -22,12 +22,10 @@ instance Eq a => Compression RLE a where
   popTail (Run x 1) = ([], x)
   popTail (Run x n) = ([Run x (n - 1)], x)
 
-  tryConcat (Run x n) (Run y m) =
-    if x == y
-      then Just $ Run x (n + m)
-      else Nothing
+  tryMerge (Run x n) (Run y m) | x == y = Just (Run x (n + m))
+  tryMerge _ _ = Nothing
 
-  trySplit (Run x n) i
-    | i <= 0 = AllRight (Run x n)
-    | i >= n = AllLeft (Run x n)
-    | otherwise = Split [Run x i] [Run x (n - i)]
+  split (Run x n) i
+    | i <= 0 = ([], [Run x n])
+    | i >= n = ([Run x n], [])
+    | otherwise = ([Run x i], [Run x (n - i)])

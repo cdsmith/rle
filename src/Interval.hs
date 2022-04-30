@@ -5,7 +5,7 @@
 
 module Interval (Interval) where
 
-import Compression (Compression (..), Split (..))
+import Compression (Compression (..))
 
 data Interval a where
   Interval :: Enum a => Int -> Int -> Interval a
@@ -31,20 +31,19 @@ instance (Eq a, Enum a) => Compression Interval a where
     where
       i = fromEnum x
 
-  popHead (Interval i j) =
-    (toEnum i, if i == j then [] else [Interval (i + 1) j])
+  popHead (Interval i j) = (toEnum i, [Interval (i + 1) j | i /= j])
   popHead (Unique x) = (x, [])
 
-  popTail (Interval i j) =
-    (if i == j then [] else [Interval i (j - 1)], toEnum j)
+  popTail (Interval i j) = ([Interval i (j - 1) | i /= j], toEnum j)
   popTail (Unique x) = ([], x)
 
-  tryConcat (Interval i j) (Interval k l) =
+  tryMerge (Interval i j) (Interval k l) =
     if j + 1 == k then Just (Interval i l) else Nothing
-  tryConcat _ _ = Nothing
+  tryMerge _ _ = Nothing
 
-  trySplit int@(Interval j k) i
-    | i <= 0 = AllRight int
-    | i > k - j = AllLeft int
-    | otherwise = let m = j + i in Split [Interval i (m - 1)] [Interval m k]
-  trySplit int@(Unique _) i = if i <= 0 then AllRight int else AllLeft int
+  split atom i
+    | i <= 0 = ([], [atom])
+    | Interval lo hi <- atom,
+      i <= hi - lo =
+        ([Interval lo (lo + i - 1)], [Interval (lo + i) hi])
+    | otherwise = ([atom], [])

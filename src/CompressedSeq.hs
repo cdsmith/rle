@@ -27,7 +27,7 @@ module CompressedSeq
   )
 where
 
-import Compression (Compression (..), Split (..))
+import Compression (Compression (..))
 import qualified Control.Monad as Monad
 import Data.Coerce (coerce)
 import Data.FingerTree (FingerTree, Measured (..))
@@ -122,7 +122,7 @@ instance Compression f a => Semigroup (CompressedSeq f a) where
       (FingerTree.EmptyR, _) -> CompressedSeq ys
       (_, FingerTree.EmptyL) -> CompressedSeq xs
       (xxs FingerTree.:> Atom x, Atom y FingerTree.:< yys) ->
-        case tryConcat x y of
+        case tryMerge x y of
           -- Recursion terminates because there is one fewer total element.
           Just x' -> CompressedSeq xxs <> atom x' <> CompressedSeq yys
           Nothing -> CompressedSeq (xs <> ys)
@@ -159,13 +159,8 @@ splitAt ::
   (CompressedSeq f a, CompressedSeq f a)
 splitAt n (CompressedSeq xs) = case FingerTree.split (> Length n) xs of
   (a, FingerTree.viewl -> Atom x FingerTree.:< b) ->
-    case trySplit x (n - getLength (measure a)) of
-      AllLeft x' -> (CompressedSeq a <> atom x', CompressedSeq b)
-      AllRight y' -> (CompressedSeq a, atom y' <> CompressedSeq b)
-      Split ls rs ->
-        ( CompressedSeq a <> foldMap atom ls,
-          foldMap atom rs <> CompressedSeq b
-        )
+    let (x1, x2) = split x (n - getLength (measure a))
+     in (CompressedSeq a <> foldMap atom x1, foldMap atom x2 <> CompressedSeq b)
   _ -> (CompressedSeq xs, Empty)
 
 lookup :: Compression f a => Int -> CompressedSeq f a -> Maybe a
