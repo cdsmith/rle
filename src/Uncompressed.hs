@@ -7,6 +7,7 @@ module Uncompressed (Uncompressed (..)) where
 import Compression (Compression (..))
 import Text.Show.Deriving (deriveShow1)
 
+-- | A null compression scheme.  @'toList' ('Uncompressed' x) = [x]@.
 newtype Uncompressed a = Uncompressed a deriving (Eq, Ord, Show)
 
 deriveShow1 ''Uncompressed

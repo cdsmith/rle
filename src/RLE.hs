@@ -8,6 +8,8 @@ import Compression (Compression (..))
 import Data.Semigroup (stimes)
 import Text.Show.Deriving (deriveShow1)
 
+-- | A compression scheme that combined repeated elements into runs.
+-- @'toList' ('Run' x n) = 'replicate' n x@.
 data RLE a = Run a !Int deriving (Eq, Ord, Show)
 
 deriveShow1 ''RLE
