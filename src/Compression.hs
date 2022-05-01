@@ -1,6 +1,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Compression where
+import Data.Functor.Identity (Identity (..))
 
 -- | Type class representing a compression scheme.  When there is an instance
 -- for @Compression f a@, then @f a@ is a compressed representation for some
@@ -58,3 +60,15 @@ class Foldable f => Compression f a where
   -- instance for 'Data.Functor.Compose'.
   count :: f a -> Int
   count = length
+
+instance Compression Identity a where
+  solo = Identity
+
+  popHead (Identity x) = (x, [])
+  popTail (Identity x) = ([], x)
+
+  tryMerge _ _ = Nothing
+
+  split x i
+    | i <= 0 = ([], [x])
+    | otherwise = ([x], [])

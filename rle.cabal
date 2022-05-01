@@ -7,7 +7,7 @@ maintainer:         cdsmith@gmail.com
 extra-source-files: CHANGELOG.md
 
 library
-    exposed-modules:  Compression, CompressedSeq, RLE, Interval, Uncompressed
+    exposed-modules:  Compression, CompressedSeq, RLE, Interval
     build-depends:    base, fingertree, containers, deriving-compat
     hs-source-dirs:   src
     default-language: Haskell2010
