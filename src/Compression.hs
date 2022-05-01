@@ -8,12 +8,16 @@ module Compression where
 import Data.Kind (Type)
 
 class Foldable f => Compression (f :: Type -> Type) a where
-  count :: f a -> Int
   solo :: a -> f a
   popHead :: f a -> (a, [f a])
   popTail :: f a -> ([f a], a)
   tryMerge :: f a -> f a -> Maybe (f a)
   split :: f a -> Int -> ([f a], [f a])
+
+  -- | This really shouldn't be needed, but I've included it because 'length' is
+  -- inefficient in the 'Foldable' instance for 'Data.Functor.Compose'.
+  count :: f a -> Int
+  count = length
 
 -- LAWS: TODO
 

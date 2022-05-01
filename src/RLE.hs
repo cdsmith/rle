@@ -14,10 +14,9 @@ deriveShow1 ''RLE
 
 instance Foldable RLE where
   foldMap f (Run x n) = stimes n (f x)
+  length (Run _ n) = n
 
 instance Eq a => Compression RLE a where
-  count (Run _ n) = n
-
   solo x = Run x 1
 
   popHead (Run x 1) = (x, [])

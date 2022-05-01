@@ -25,10 +25,10 @@ instance Foldable Interval where
   foldMap f (Interval i j) = foldMap (f . toEnum) [i .. j]
   foldMap f (Unique x) = f x
 
-instance (Eq a, Enum a) => Compression Interval a where
-  count (Interval i j) = j - i + 1
-  count (Unique _) = 1
+  length (Interval i j) = j - i + 1
+  length (Unique _) = 1
 
+instance (Eq a, Enum a) => Compression Interval a where
   solo x
     | x == toEnum i = Interval i i
     | otherwise = Unique x

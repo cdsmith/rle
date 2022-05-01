@@ -13,10 +13,9 @@ deriveShow1 ''Uncompressed
 
 instance Foldable Uncompressed where
   foldMap f (Uncompressed x) = f x
+  length (Uncompressed _) = 1
 
 instance Compression Uncompressed a where
-  count _ = 1
-
   solo = Uncompressed
 
   popHead (Uncompressed x) = (x, [])
