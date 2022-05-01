@@ -32,6 +32,8 @@ instance Foldable Interval where
   length (Interval lo hi) = hi - lo + 1
   length (Unique _) = 1
 
+  null _ = False
+
 instance (Eq a, Enum a) => Compression Interval a where
   solo x
     | x == toEnum i = Interval i i
