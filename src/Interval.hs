@@ -7,6 +7,7 @@
 module Interval (Interval(..)) where
 
 import Compression (Compression (..))
+import Data.Eq.Deriving (deriveEq1)
 import Text.Show.Deriving (deriveShow1)
 
 -- | A compression scheme that encodes consecutive elements into inclusive
@@ -18,11 +19,10 @@ data Interval a where
   Unique :: a -> Interval a
 
 deriving instance Eq a => Eq (Interval a)
-
 deriving instance Ord a => Ord (Interval a)
-
 deriving instance Show a => Show (Interval a)
 
+deriveEq1 ''Interval
 deriveShow1 ''Interval
 
 instance Foldable Interval where

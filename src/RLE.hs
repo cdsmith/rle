@@ -6,12 +6,14 @@ module RLE (RLE(..)) where
 
 import Compression (Compression (..))
 import Data.Semigroup (stimes)
+import Data.Eq.Deriving (deriveEq1)
 import Text.Show.Deriving (deriveShow1)
 
 -- | A compression scheme that combined repeated elements into runs.
 -- @'toList' ('Run' x n) = 'replicate' n x@.
 data RLE a = Run a !Int deriving (Eq, Ord, Show)
 
+deriveEq1 ''RLE
 deriveShow1 ''RLE
 
 instance Foldable RLE where

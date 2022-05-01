@@ -1,8 +1,13 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
-module Compression where
+module Compression (Compression (..)) where
+
+import Data.Coerce (coerce)
+import Data.Foldable (foldMap')
+import Data.Functor.Compose (Compose (Compose))
 import Data.Functor.Identity (Identity (..))
+import Data.Monoid (Sum (..))
 
 -- | Type class representing a compression scheme.  When there is an instance
 -- for @Compression f a@, then @f a@ is a compressed representation for some
@@ -72,3 +77,84 @@ instance Compression Identity a where
   split x i
     | i <= 0 = ([], [x])
     | otherwise = ([x], [])
+
+-- | An incorrect Compression instance for Compose.
+--
+-- Here's the fundamental problem.  Suppose:
+--
+-- xs = [1, 2, 3, 1, 2, 3, 1, 2, 3, 4, 1, 2, 3, 4]
+--
+-- Consider a CompressedSeq using @Compose RLE Interval@.  It's natural to
+-- expect Interval to be applied first, followed by RLE on the intervals.  That
+-- leads to this representation:
+--
+-- CompressedSeq.fromList xs ~ [Run (Interval 1 3) 2, Run (Interval 1 4) 2]
+--
+-- However, consider splitting xs as follows:
+--
+-- ys = [1, 2, 3, 1, 2, 3, 1, 2, 3]
+-- zs = [4, 1, 2, 3, 4]
+--
+-- Then the same inside-first approach naturally gives:
+--
+-- CompressedSeq.fromList ys ~ [Run (Interval 1 3) 3]
+-- CompressedSeq.fromList zs ~ [Run (Interval 4 4) 1, Run (Interval 1 4) 1]
+--
+-- Compression usually happens by merging consecutive atoms, and in this case,
+-- the atoms that need merging are (Run (Interval 1 3) 3) and
+-- (Run (Interval 4 4) 1).  It's not obvious that they can or should be merged.
+-- If they were, it should yield [Run (Interval 1 3) 2, Run (Interval 1 4) 1],
+-- which is two atoms instead of 1, and isn't obviously any better than the
+-- original two atoms!
+instance
+  (Compression f (g a), Compression g a) =>
+  Compression (Compose f g) a
+  where
+  count (Compose xs) =
+    getSum (foldMap' (Sum . count) xs)
+  solo = Compose . solo . solo
+  popHead (Compose x) = (b, coerce (map solo bs ++ as))
+    where
+      (a, as) = popHead x
+      (b, bs) = popHead a
+  popTail (Compose x) = (coerce (as ++ map solo bs), b)
+    where
+      (as, a) = popTail x
+      (bs, b) = popTail a
+  tryMerge (Compose x) (Compose y) = coerce (tryMerge x y)
+  split (Compose x) i = splitComposeSingle i x
+
+splitComposeSingle ::
+  (Compression g a, Compression f (g a)) =>
+  Int ->
+  f (g a) ->
+  ([Compose f g a], [Compose f g a])
+splitComposeSingle i x
+  | i <= 0 = ([], [Compose x])
+  | otherwise =
+      let (a, as) = popHead x
+       in if i <= count a
+            then
+              let (a1, a2) = split a i
+               in ( map (Compose . solo) a1,
+                    map (Compose . solo) a2 ++ coerce as
+                  )
+            else
+              let i' = i - count a
+                  (b1, b2) = splitComposeMulti i' as
+               in (Compose (solo a) : b1, b2)
+
+splitComposeMulti ::
+  (Compression g a, Compression f (g a)) =>
+  Int ->
+  [f (g a)] ->
+  ([Compose f g a], [Compose f g a])
+splitComposeMulti _ [] = ([], [])
+splitComposeMulti i (x : xs)
+  | i < count (Compose x) =
+      let (x1, x2) = splitComposeSingle i x
+       in (x1, x2 ++ coerce xs)
+  | otherwise =
+      let i' = i - count x
+          (b1, b2) = splitComposeMulti i' xs
+       in (Compose x : b1, b2)
