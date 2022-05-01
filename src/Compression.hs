@@ -106,6 +106,12 @@ instance Compression Identity a where
 -- If they were, it should yield [Run (Interval 1 3) 2, Run (Interval 1 4) 1],
 -- which is two atoms instead of 1, and isn't obviously any better than the
 -- original two atoms!
+--
+-- In trying to solve this problem, one should be aware that the termination
+-- argument for '<>' on 'CompressedSeq' currently depends on the fact that a
+-- non-'Nothing' result from 'tryMerge' always decreases the number of atoms in
+-- the total sequence.  If this were no longer true, then there would need to
+-- be another way to guarantee that '<>' will terminate.
 instance
   (Compression f (g a), Compression g a) =>
   Compression (Compose f g) a
