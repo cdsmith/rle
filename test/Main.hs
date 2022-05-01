@@ -11,12 +11,12 @@ main = hspec $ do
   describe "RLE" $ do
     it "works" $ do
       let xs = CompressedSeq.fromList "aaaabccaadeeee" :: CompressedSeq RLE Char
-      CompressedSeq.length xs `shouldBe` 14
+      length xs `shouldBe` 14
       length (CompressedSeq.atoms xs) `shouldBe` 6
 
   describe "Interval" $ do
     it "works" $ do
       let xs =
             CompressedSeq.fromList "abcdefZhijkl" :: CompressedSeq Interval Char
-      CompressedSeq.length xs `shouldBe` 12
+      length xs `shouldBe` 12
       length (CompressedSeq.atoms xs) `shouldBe` 3
